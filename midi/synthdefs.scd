@@ -95,7 +95,7 @@ SynthDef.new(\iter, {|atk = 0.05, rel = 0.1|
 
 
 //:
-SynthDef.new(\lfpar, {|freq = 673, amp = 0.8, pan = 0, atk = 0.8, rel = 0.2, cfmin = 500, cfmax = 2000, cfhzmin = 0.1, cfhzmax = 0.3, rqmin = 0.1, rqmax = 0.2|
+SynthDef.new(\lfpar0, {|freq = 673, amp = 0.8, pan = 0, atk = 0.8, rel = 0.2, cfmin = 500, cfmax = 2000, cfhzmin = 0.1, cfhzmax = 0.3, rqmin = 0.1, rqmax = 0.2|
 	var sig, env;
 	sig = LFPar.ar(Vibrato.kr(freq));
 	env = EnvGen.ar(Env.new([0, 1, 0], [atk, rel], \wel, ),doneAction:2);
@@ -107,24 +107,22 @@ SynthDef.new(\lfpar, {|freq = 673, amp = 0.8, pan = 0, atk = 0.8, rel = 0.2, cfm
 	sig = sig * env * amp;
 	Out.ar(0, sig);
 }).add;
-
 //:
-4.do{
-	Synth(
-		\lfpar,
-		[
-			\freq, (Scale.minor.degrees+60).midicps.choose,
-			\amp, 0.25,
-			\cfmin, 50 * 2,
-			\cfmax, 50 * 50,
-			\rqmin, 0.5,
-			\rqmax, 0.8,
-			\cfhzmin, 1,
-			\cfhzmax, 6,
-		]
-	);
-};
 
+//:THIS IS A FIX OF THE ENVELOPE TO USE IN PATTERNS
+SimpleDef.customEnv(\lfpar, {|freq = 673 |
+	var sig;
+	sig = LFPar.ar(Vibrato.kr(freq));
+	
+	sig = LPF.ar(sig,
+		LFNoise1.kr(
+			LFNoise1.kr(4).exprange(\cfhzmin.kr(0.1), \cfhzmax.kr(0.3))
+		).exprange(\cfmin.kr(500), \cfmax.kr(2000)), LFNoise1.kr(0.1).exprange(\rqmin.kr(0.1), \rqmax.kr(0.2)));
+	
+	FreeVerb.ar(sig, 0.45, 0.8);
+	//	sig = sig * env * amp;
+	// Out.ar(0, sig);
+}, { Env.new([0, 1, 0], [\atk.kr(1), \rel.kr(1)], \wel, 1) });
 
 //:
 SynthDef.new(\blip, {|round = 300, dust = 20, max = 1200|
